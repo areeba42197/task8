@@ -1,0 +1,132 @@
+#include <iostream>
+#include <vector>
+#include <ctime>
+
+using namespace std;
+
+struct Boat {
+    int boatNumber;
+    double moneyTaken;
+    double totalHoursHired;
+    time_t returnTime;
+    bool isAvailable;
+};
+
+const int NUM_BOATS = 10;
+const double HOURLY_RATE = 20.0;
+const double HALF_HOUR_RATE = 12.0;
+const int OPENING_HOUR = 10;
+const int CLOSING_HOUR = 17;
+
+// Function prototypes
+void calculateDailyProfit(Boat& boat);
+int findNextAvailableBoat(vector<Boat>& boats);
+void calculateTotalMoneyAndHours(const vector<Boat>& boats);
+
+int main() {
+    vector<Boat> boats(NUM_BOATS);
+
+    // Initialize boats
+    for (int i = 0; i < NUM_BOATS; ++i) {
+        boats[i].boatNumber = i + 1;
+        boats[i].moneyTaken = 0.0;
+        boats[i].totalHoursHired = 0.0;
+        boats[i].returnTime = 0;
+        boats[i].isAvailable = true;
+    }
+
+    // Task 1 - Calculate money taken for one boat
+    for (int i = 0; i < NUM_BOATS; ++i) {
+        cout << "Boat " << boats[i].boatNumber << ":" << endl;
+        calculateDailyProfit(boats[i]);
+    }
+
+    // Task 2 - Find the next available boat
+    int availableBoat = findNextAvailableBoat(boats);
+    if (availableBoat != -1) {
+        cout << "Next available boat: " << boats[availableBoat].boatNumber << endl;
+    } else {
+        cout << "No boats available. Next available time: " << OPENING_HOUR << ":00" << endl;
+    }
+
+    // Task 3 - Calculate money taken for all boats at the end of the day
+    calculateTotalMoneyAndHours(boats);
+
+    return 0;
+}
+
+void calculateDailyProfit(Boat& boat) {
+    int startHour, endHour;
+    double rate;
+
+    cout << "Enter start hour for boat " << boat.boatNumber << " (between 10 and 17): ";
+    cin >> startHour;
+
+    if (startHour < OPENING_HOUR || startHour > CLOSING_HOUR) {
+        cout << "Error: Invalid start hour. Must be between 10 and 17." << endl;
+        return;
+    }
+
+    cout << "Enter duration in hours for boat " << boat.boatNumber << ": ";
+    cin >> endHour;
+
+    if (endHour <= 0 || startHour + endHour > CLOSING_HOUR) {
+        cout << "Error: Invalid duration or return time. Please check the input." << endl;
+        return;
+    }
+
+    if (endHour == 0.5) {
+        rate = HALF_HOUR_RATE;
+    } else {
+        rate = HOURLY_RATE;
+    }
+
+    double payment = rate * endHour;
+    boat.moneyTaken += payment;
+    boat.totalHoursHired += endHour;
+    boat.returnTime = time(0) + endHour * 3600;
+    boat.isAvailable = false;
+
+    cout << "Boat " << boat.boatNumber << " hired for " << endHour << " hours. Payment: $" << payment << endl;
+}
+
+int findNextAvailableBoat(vector<Boat>& boats) {
+    time_t currentTime = time(0);
+
+    for (int i = 0; i < NUM_BOATS; ++i) {
+        if (boats[i].isAvailable) {
+            return i;
+        } else if (currentTime >= boats[i].returnTime) {
+            boats[i].isAvailable = true;
+        }
+    }
+
+    return -1;
+}
+
+void calculateTotalMoneyAndHours(const vector<Boat>& boats) {
+    double totalMoney = 0.0;
+    double totalHours = 0.0;
+    int unusedBoats = 0;
+    int mostUsedBoat = 0;
+
+    for (int i = 0; i < NUM_BOATS; ++i) {
+        totalMoney += boats[i].moneyTaken;
+        totalHours += boats[i].totalHoursHired;
+
+        if (boats[i].totalHoursHired == 0) {
+            unusedBoats++;
+        }
+
+        if (boats[i].totalHoursHired > boats[mostUsedBoat].totalHoursHired) {
+            mostUsedBoat = i;
+        }
+    }
+
+    cout << "\nEnd of day report:\n";
+    cout << "Total money taken: $" << totalMoney << endl;
+    cout << "Total hours boats were hired: " << totalHours << " hours" << endl;
+    cout << "Number of boats not used: " << unusedBoats << endl;
+    cout << "Boat " << boats[mostUsedBoat].boatNumber << " was used the most with " << boats[mostUsedBoat].totalHoursHired << " hours." << endl;
+}
+
